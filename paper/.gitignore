@@ -1,0 +1,13 @@
+# Artefactos locales de compilacion (no forman parte del manuscrito)
+ceurart.cls
+paper.pdf
+paper-largo.pdf
+*.aux
+*.bbl
+*.blg
+*.log
+*.abs
+*.out
+*.xmpdata
+*.xmpi
+creationdate.lua
