@@ -129,7 +129,7 @@ Popularity bias mitigation
 
 Digital streaming totally reshaped the music business. Global revenues hit USD
 29.6 billion in 2024, showing massive growth in the streaming
-era~\cite{ifpi2024report}. Yet this economic expansion has not exactly trickled
+era~\cite{ifpi2025report}. Yet this economic expansion has not exactly trickled
 down to emerging artists, who still face a brutal visibility gap in an
 increasingly concentrated digital landscape. For independent musicians, the
 boom often feels like an illusion. The first author spent 14 years playing
@@ -228,9 +228,8 @@ flexibility together with data-warehouse transactional capabilities, through
 Delta Lake, Apache Iceberg and Apache Hudi, which handle ACID transactions over
 object storage. Our implementation adapts these principles locally, using
 parquet-based storage with manual versioning, schema validation and snapshot
-isolation; data-versioning approaches discussed by Pimentel
-et~al.~\cite{pimentel2021dataversioning} informed that design. The result is
-reproducibility and traceability without needing AWS or GCP.
+isolation. The result is reproducibility and traceability without needing AWS
+or GCP.
 
 \subsection{Background and Related Work}
 \label{sec:background}
@@ -285,7 +284,7 @@ songs.
 \subsubsection{Foundational Datasets}
 The datasets we used are pretty much the foundation for this kind of research:
 \begin{itemize}
-  \item \textbf{WASABI Dataset}~\cite{tikat2021wasabi}: lyrical content and
+  \item \textbf{WASABI Dataset}~\cite{buffa2021wasabi}: lyrical content and
     cultural metadata for over 2 million commercially released songs, covering
     1922 to 2022.
   \item \textbf{Million Song Dataset (MSD)}~\cite{bertin2011million}: 26
@@ -403,7 +402,7 @@ provides four capabilities:
     ingestion to keep types consistent.
   \item \textbf{Snapshot isolation}: directory-based versioning
     (\texttt{/data/v$_{t}$/}) enabling reproducible experiments through
-    point-in-time data access~\cite{pimentel2021dataversioning}.
+    point-in-time data access.
   \item \textbf{Partitioning strategy}: hierarchical organisation by
     $(\textit{year}, \textit{genre}, \textit{artist\_initial})$, optimising
     query performance through predicate pushdown.

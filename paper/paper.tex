@@ -126,7 +126,7 @@ Popularity bias mitigation
 \label{sec:introduction}
 
 Digital streaming reshaped the music business: global revenues hit USD 29.6
-billion in 2024~\cite{ifpi2024report}. That expansion has not reached emerging
+billion in 2024~\cite{ifpi2025report}. That expansion has not reached emerging
 artists to the same degree. The first author played drums in bands across
 Colombia for fourteen years, and the observation from inside those scenes is
 consistent with the literature: new artists are rarely recommended.
@@ -188,9 +188,8 @@ heterogeneous feature spaces and late fusion leaves inter-modal correlations
 unused. We adapt that mechanism to music. On the data side, the lakehouse
 paradigm~\cite{armbrust2020delta} combines data-lake flexibility with
 warehouse-style transactions; we implement the same requirements locally with
-parquet-based storage, manual versioning and schema validation, which supports
-reproducibility and traceability without cloud
-infrastructure~\cite{pimentel2021dataversioning}.
+parquet-based storage, manual versioning and schema validation, which is what
+supports reproducibility and traceability without cloud infrastructure.
 
 Prior bias-mitigation work relies on post-processing re-ranking, inverse
 propensity weighting or adversarial
@@ -254,7 +253,7 @@ Source: own elaboration.}
 
 \subsection{Data Sources, Integration and Interaction Generation}
 Four sources feed the system, each contributing a different modality: the WASABI
-dataset for lyrics and cultural metadata~\cite{tikat2021wasabi}; the Million
+dataset for lyrics and cultural metadata~\cite{buffa2021wasabi}; the Million
 Song Dataset (MSD) for 26 continuous acoustic features such as tempo, energy,
 valence, danceability and loudness~\cite{bertin2011million}; Lyrics
 1950--2019 for thematic and emotional metadata encoded as sentiment vectors

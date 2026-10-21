@@ -11,3 +11,6 @@ paper-largo.pdf
 *.xmpdata
 *.xmpi
 creationdate.lua
+
+# Paquete de envio generado por make_submission.py
+dist/
