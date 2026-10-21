@@ -29,7 +29,7 @@
 \usepackage{microtype}
 \emergencystretch=1em
 
-%% Buscar imágenes tanto en figures/ como en la raíz del proyecto de Overleaf.
+%% Buscar imágenes tanto en figures/ como en la raíz del proyecto.
 \graphicspath{{figures/}{./}}
 
 %% ---- notación matemática ----
@@ -56,7 +56,7 @@
 %% ---- título ----
 \title{EchoPulse AI: A Hybrid Local Data Architecture for Multimodal Music
   Recommendation}
-\subtitle{Integrating WASABI, MSD, and TalkPlay Datasets}
+\subtitle{Integrating WASABI, MSD, Lyrics and TalkPlayData-2 Locally}
 
 %% ---- autores ----
 \author[1]{John Kennedy Landazuri Sandoval}[%
@@ -91,23 +91,22 @@ email=cristian.mendez@docente.fup.edu.co,
 
 %% ---- resumen ----
 \begin{abstract}
-Most music recommendation systems keep feeding the popular while starving
-emerging artists, because traditional algorithms chase popularity signals and
-largely ignore content affinity. This paper presents EchoPulse AI, a locally
-deployed multimodal recommender that tackles this visibility gap. The system
-processes lyrical, acoustic, metadata and conversational data through a
-Triple-Encoder Transformer, consolidating heterogeneous datasets (WASABI,
-Million Song Dataset, Lyrics 1950--2019 and TalkPlayData-2) through a five-stage
-local pipeline that avoids cloud dependencies entirely. The methodology relies
-on a deliberately curated Master Table of 5,710 tracks with complete multimodal
-coverage, designed as a controlled proof of concept that isolates the cold-start
-problem. Against collaborative filtering, BERT4Rec and SASRec baselines,
-EchoPulse AI reaches competitive accuracy (Hit@10\,=\,0.312) while improving
-Intra-List Diversity by 45.3\% and Emerging Artist Discovery by 157.9\%; core
-retrieval components run below 250\,ms on consumer hardware. The current
-implementation favours English-language content and is validated offline only,
-so scaling to industrial catalogues and running online user studies are the key
-next steps.
+Recommendation systems built on collaborative signals tend to keep surfacing
+already popular tracks, because a song with no play history contributes little
+evidence to the ranking. This paper presents EchoPulse AI, a locally deployed
+multimodal recommender that addresses this visibility gap. The system processes
+lyrical, acoustic, metadata and conversational data through a Triple-Encoder
+Transformer, consolidating heterogeneous datasets (WASABI, Million Song
+Dataset, Lyrics 1950--2019 and TalkPlayData-2) through a five-stage local
+pipeline that runs without cloud dependencies. The methodology relies on a
+curated Master Table of 5,710 tracks with complete multimodal coverage,
+designed as a controlled proof of concept that isolates the cold-start problem.
+Against collaborative filtering, BERT4Rec and SASRec baselines, EchoPulse AI
+reaches competitive accuracy (Hit@10\,=\,0.312) while improving Intra-List
+Diversity by 45.3\% and Emerging Artist Discovery by 157.9\%; core retrieval
+components run below 250\,ms on consumer hardware. The current implementation
+favours English-language content and is validated offline only, so scaling to
+industrial catalogues and running online user studies are the key next steps.
 \end{abstract}
 
 %% ---- palabras clave ----
@@ -127,42 +126,41 @@ Popularity bias mitigation
 \label{sec:introduction}
 
 Digital streaming reshaped the music business: global revenues hit USD 29.6
-billion in 2024~\cite{ifpi2024report}. That expansion has not trickled down to
-emerging artists, who still face a brutal visibility gap. The first author spent
-14 years playing drums in bands across Colombia, and the reality on the ground
-is stark: new artists simply do not get recommended. Not because their music
-lacks quality, but because algorithms systematically favour established acts.
+billion in 2024~\cite{ifpi2024report}. That expansion has not reached emerging
+artists to the same degree. The first author played drums in bands across
+Colombia for fourteen years, and the observation from inside those scenes is
+consistent with the literature: new artists are rarely recommended.
 
-Most platforms still lean heavily on collaborative filtering: they track who
-clicks what and amplify the hits. That works for global superstars and collapses
-on the cold-start problem~\cite{schein2002methods,adomavicius2005toward}. A new
-track with no play history is ignored, which closes a feedback loop that funnels
-attention toward the same handful of songs. In Latin American scenes the
-situation is worse: local artists compete with global hits and with a flood of
-algorithmically generated background music.
+Most platforms still lean heavily on collaborative filtering~\cite{ricci2015recommender}.
+It performs well on high-volume catalogue and degrades on the cold
+start~\cite{schein2002methods,adomavicius2005toward}: a new track receives no
+exposure, gains no interactions, and is therefore excluded from the next
+round of recommendations. In Latin American scenes the effect compounds,
+because local artists compete for the same attention as global catalogue and,
+increasingly, as generated background music.
 
-Content-based approaches offer a way out. Looking at lyrics, acoustic
-properties and metadata makes it possible to recommend what the music actually
+Content-based approaches address this directly. Using lyrics, acoustic
+properties and metadata makes it possible to rank what the music actually
 sounds like~\cite{ricci2015recommender,aggarwal2016recommender}. The
 Transformer~\cite{vaswani2017attention} maps long-range dependencies well, which
 suits the structured, multi-layered nature of musical
 content~\cite{baltruvsaitis2019multimodal}.
 
 This paper introduces EchoPulse AI, a locally deployed multimodal recommender
-built within the IMS Research Group at Fundación Universitaria de Popayán. Why
-local? The group had a limited cloud budget and regional connectivity is
-notoriously unstable. Rather than treating those constraints as a weakness, they
-forced a design that prioritises efficiency, reproducibility and zero cloud
-dependency. Three contributions emerge: (i) a hybrid local data architecture
-that consolidates messy, heterogeneous music datasets through a five-stage
-pipeline without AWS or GCP; (ii) a Triple-Encoder Transformer with specialised
-modules for lyrics, audio and conversation, formalised mathematically; and
-(iii) an end-to-end evaluation showing that diversity and emerging-artist
-visibility can improve dramatically without tanking accuracy. Building the
-Master Table was the hardest part of the project: reconciling incompatible
-identifier systems, imputing massive amounts of missing data, and forcing four
-datasets into one clean collection of 5,710 tracks. That data-engineering
-struggle shaped the architecture described below.
+built within the IMS Research Group at Fundación Universitaria de Popayán. The
+deployment target was set by the conditions of the group rather than by
+preference: a limited cloud budget and unreliable regional connectivity pushed
+the design toward efficiency and reproducibility without cloud services. The
+work contributes three things: a hybrid local data architecture that
+consolidates heterogeneous music datasets through a five-stage pipeline; a
+Triple-Encoder Transformer with specialised modules for lyrics, audio and
+conversation; and an end-to-end evaluation on a controlled dataset showing that
+diversity and emerging-artist visibility improve while retrieval accuracy stays
+competitive with the baselines. Building the Master Table took more effort than
+the modelling itself: reconciling incompatible identifier systems, imputing
+missing values and aligning four datasets into one collection of 5,710 tracks
+with complete multimodal coverage. That work shaped the architecture described
+below.
 
 Section~\ref{sec:framework} reviews the framework and hypotheses,
 Section~\ref{sec:methodology} details the pipeline and model, and
@@ -179,17 +177,18 @@ The Transformer self-attention mechanism~\cite{vaswani2017attention} computes
   = \softmax\left(\frac{\mat{Q}\mat{K}^\top}{\sqrt{d_k}}\right)\mat{V},
 \label{eq:attention}
 \end{equation}
-letting the model weigh which parts of a sequence matter most. This fits music
-because songs have verses, choruses and bridges that attention can pick up on.
+letting the model weigh which parts of a sequence matter most. Songs are
+organised in exactly that way, with verses, choruses and bridges recurring at a
+distance, which is why sequence models transfer well to this material.
 Multimodal machine learning formalises how to combine such heterogeneous
-sources~\cite{baltruvsaitis2019multimodal}; cross-modal attention proved itself
+sources~\cite{baltruvsaitis2019multimodal}; cross-modal attention was effective
 in vision-language models such as ViLBERT~\cite{lu2019vilbert} and
-LXMERT~\cite{tan2019lxmert}. We adapt that mechanism to music, because early
-fusion struggles to align heterogeneous feature spaces and late fusion misses
-deep inter-modal correlations. On the data side, the lakehouse
+LXMERT~\cite{tan2019lxmert}, where early fusion is difficult to align across
+heterogeneous feature spaces and late fusion leaves inter-modal correlations
+unused. We adapt that mechanism to music. On the data side, the lakehouse
 paradigm~\cite{armbrust2020delta} combines data-lake flexibility with
-warehouse-style transactions; we adapt those principles locally with
-parquet-based storage, manual versioning and schema validation, achieving
+warehouse-style transactions; we implement the same requirements locally with
+parquet-based storage, manual versioning and schema validation, which supports
 reproducibility and traceability without cloud
 infrastructure~\cite{pimentel2021dataversioning}.
 
@@ -201,17 +200,19 @@ baselines inherit the same flaw: BERT4Rec improves accuracy through
 bidirectional encoding but keeps the popularity bias of its training
 data~\cite{sun2019bert4rec}, and SASRec behaves likewise with
 self-attention~\cite{kang2018self}. Conversational recommenders such as TalkPlay
-generate recommendations in natural language but lack structured multimodal
-integration and rigorous evaluation of their generative
-components~\cite{choi2025talkplaydata2,gao2021advances}.
+generate recommendations in natural language but do not report a structured
+multimodal fusion, and their generative components are not evaluated
+quantitatively~\cite{choi2025talkplaydata2,gao2021advances}.
 
-From this we posit two hypotheses. \textbf{H1 (multimodal fusion superiority):}
-fusing lyrical, acoustic and conversational modalities through cross-attention
-captures user intent better than early/late fusion or unimodal baselines.
-\textbf{H2 (popularity bias mitigation):} a content-based multimodal approach
-inherently avoids popularity bias, significantly improving Intra-List Diversity
-(ILD) and Emerging Artist Discovery (EAD). Both are formalised through a hybrid
-scoring function that combines semantic, acoustic and lexical signals,
+From this we posit two hypotheses. \textbf{H1 (contribution of multimodal
+fusion):} fusing lyrical, acoustic and conversational modalities through
+cross-attention improves retrieval quality and intent matching over baselines
+that use interaction sequences or language alone, and each modality carries
+information the others do not recover. \textbf{H2 (popularity bias mitigation):}
+ranking by content affinity rather than by historical popularity increases
+Intra-List Diversity (ILD) and Emerging Artist Discovery (EAD). Both are
+expressed through a hybrid scoring function that combines semantic, acoustic
+and lexical signals,
 \begin{equation}
 S(q,c) = \alpha \cdot \cosine(\vect{e}_q, \vect{e}_c)
        + \beta \cdot \left(1 - \frac{\|\vect{f}_q - \vect{f}_c\|_2}
@@ -221,7 +222,12 @@ S(q,c) = \alpha \cdot \cosine(\vect{e}_q, \vect{e}_c)
 \end{equation}
 with $\alpha=0.4$ for semantic embeddings, $\beta=0.3$ for acoustic continuity
 and $\gamma=0.3$ for lexical filtering by Jaccard similarity over token sets
-$T_q$ and $T_c$.
+$T_q$ and $T_c$. Equation~\eqref{eq:scoring} is the retrieval score; the final
+ordering also applies the re-ranking blend described in
+Section~\ref{sec:methodology}. A direct comparison against early- and
+late-fusion variants is outside the present evaluation: H1 is tested against
+interaction-only and language-only baselines and through the ablation in
+Section~\ref{sec:results}.
 
 %% ============================================================================
 \section{Methodology}
@@ -229,10 +235,10 @@ $T_q$ and $T_c$.
 
 \subsection{Five-Stage Local Pipeline}
 EchoPulse AI runs on a five-stage local architecture adapted from standard MLOps
-practice for strictly local deployment. Figure~\ref{fig:architecture} maps the
-journey from raw heterogeneous sources to local deployment, including the
+practice for strictly local deployment. Figure~\ref{fig:architecture} traces the
+flow from raw heterogeneous sources to local deployment, including the
 evaluation feedback loop. The stages---Data Sources, Data Lake, Data Processing,
-Data Modeling and Data Product---guarantee reproducibility and traceability
+Data Modeling and Data Product---support reproducibility and traceability
 through schema validation, directory-based snapshot isolation, hierarchical
 $(\textit{year}, \textit{genre}, \textit{artist\_initial})$ partitioning and a
 SQLite metadata catalog.
@@ -240,9 +246,8 @@ SQLite metadata catalog.
 \begin{figure}
 \centering
 \includegraphics[width=0.55\textwidth]{archEchoPulse.png}
-\caption{EchoPulse AI local data architecture: end-to-end pipeline from
-heterogeneous sources to local deployment with an evaluation feedback loop. The
-five stages ensure reproducibility and traceability without cloud dependencies.
+\caption{EchoPulse AI local data architecture: five-stage pipeline from
+heterogeneous sources to local deployment, with an evaluation feedback loop.
 Source: own elaboration.}
 \label{fig:architecture}
 \end{figure}
@@ -274,31 +279,35 @@ with tokenised lyrics $\vect{l}_i$, acoustic features
 $\vect{a}_i \in \Real^{26}$, metadata embeddings $\vect{m}_i$, conversational
 context $\vect{c}_i$ and target identifier $y_i$.
 
-That 5,710-track table was deliberately curated as a controlled proof of concept
-to isolate the effect of multimodal fusion on the cold-start problem. Deriving
-implicit feedback for offline conversational evaluation is notoriously
-difficult, so we mapped the structured TalkPlayData-2 dialogues onto the Master
-Table: intents expressed in the dialogues were semantically matched to track
-embeddings, producing a synthetic yet structurally valid interaction matrix.
-This controlled setting demonstrates popularity-bias mitigation free from the
-confounding factors and extreme sparsity of uncurated industrial datasets. The
-baselines (collaborative filtering, BERT4Rec, SASRec) were trained on this
-identical matrix with their official implementations and default hyperparameters,
-to keep the comparison fair.
+The 5,710-track table is a controlled proof of concept built to isolate the
+effect of multimodal fusion on the cold-start problem. Deriving implicit
+feedback for offline conversational evaluation is difficult, so we mapped the
+structured TalkPlayData-2 dialogues onto the Master Table: intents expressed in
+the dialogues were semantically matched to track embeddings, producing a
+synthetic but structurally valid interaction matrix. The baselines
+(collaborative filtering, BERT4Rec, SASRec) were trained on this identical
+matrix with their official implementations and default hyperparameters. Two
+consequences follow, and we record them as limits rather than as conveniences.
+The matrix is itself generated by semantic matching in an embedding space, so a
+model that consumes the same space begins with an advantage, which mainly
+affects the conversational metrics; and a curated table of this size does not
+represent the sparsity of an industrial catalogue.
 
 \subsection{Triple-Encoder Transformer}
 The first module, \textbf{IntentTransformer}, is an encoder-only Transformer
 ($L=4$ layers, $H=8$ heads, $d_{\text{model}}=256$) that encodes conversational
-intent~\cite{wolf2020transformers}. It acts as a semantic funnel, reducing a
-universe of 38,343 candidate songs to a top-10 for re-ranking, and is trained
-with cross-entropy and label smoothing ($\epsilon=0.1$)~\cite{mueller2019label}.
+intent~\cite{wolf2020transformers}. It narrows the 38,343-track candidate set to
+a top-10 for re-ranking, and is trained with cross-entropy and label smoothing
+($\epsilon=0.1$)~\cite{mueller2019label}.
 
+%% VERIFICAR (autores): las fuentes documentan L_l y el ancho de los encoders de
+%% MST-MR de forma simbolica; faltan los valores numericos concretos.
 The second module, \textbf{MST-MR} (Multimodal Sequence Transformer for Music
 Recommendation), fuses modalities through cross-attention, following
 principles from vision-language fusion~\cite{lu2019vilbert,tan2019lxmert}. A
-lyrical encoder produces $\vect{h}_l$ from tokenised lyrics and a tabular MLP
-projects the 26 acoustic features into the shared space as $\vect{h}_a$; each
-modality then attends to the other,
+lyrical encoder with $L_l$ transformer layers produces $\vect{h}_l$ from
+tokenised lyrics, and a tabular MLP projects the 26 acoustic features into the
+shared space as $\vect{h}_a$; each modality then attends to the other,
 \begin{equation}
 \text{CrossAttn}(\mat{Q}_l, \mat{K}_a, \mat{V}_a)
   = \softmax\left(\frac{\mat{Q}_l \mat{K}_a^\top}{\sqrt{d_k}}\right)\mat{V}_a,
@@ -312,17 +321,24 @@ modality then attends to the other,
 \end{equation}
 and the concatenation of $\vect{h}_{\text{fusion}}$ with the conversational
 vector $\vect{h}_c$ is projected to a 512-dimensional song embedding $\vect{e}_s$
-used in Equation~\eqref{eq:scoring}. MST-MR behaves as a hybrid re-ranker,
-combining neural similarity (40\%) with lexical Jaccard similarity (60\%).
+used in Equation~\eqref{eq:scoring}. The two weightings act at different stages: \eqref{eq:scoring} scores
+candidates with $\alpha$, $\beta$ and $\gamma$, while the final ordering of the
+surviving top-10 combines the neural similarity of $\vect{e}_s$ (40\%) with
+lexical Jaccard similarity over the lyric tokens (60\%).
 
 \subsection{Local Inference}
 Serving uses a two-tier, CPU-optimised stack: a FastAPI gateway for validation,
 orchestration and asynchronous response formatting, and an inference engine with
-dynamic batching and INT8 quantization reaching 185 inferences per second versus
-73 for direct PyTorch serving~\cite{paszke2019pytorch,jacob2018quantization}.
-Quantisation cut the memory footprint by 68\% at only 1.2\% accuracy
-degradation, and the 98.4\% request success rate includes fallback handling for
-cold starts, missing metadata and API failures.
+dynamic batching and INT8 quantization. In the throughput test that engine
+reached 185 inferences per second against 73 for direct PyTorch serving, on a
+different machine from the one used for training (an Intel Core i7-11800H)
+~\cite{paszke2019pytorch,jacob2018quantization}. Quantisation cut the memory
+footprint by 68\% at 1.2\% accuracy degradation. The deployment recorded a 98.4\%
+request success rate, with fallback handling for cold starts, missing metadata
+and API failures.
+
+%% VERIFICAR (autores): protocolo de las pruebas de throughput y de tasa de
+%% exito (tamano de lote, carga, duracion) y que maquina midio cada cifra.
 
 %% ============================================================================
 \section{Results and Demonstration}
@@ -360,7 +376,12 @@ and \textbf{Emerging Artist Discovery} measures long-tail surfacing,
 \qquad \tau = 10{,}000,
 \label{eq:ead}
 \end{equation}
-the primary success indicator given our motivation. On the conversational side,
+where $\tau$ is the monthly-listener cut-off that separates long-tail from
+catalogue artists, chosen before the experiments as the indicator closest to the
+motivation of the work.
+
+%% VERIFICAR (autores): falta indicar de que campo de los datos proceden los
+%% recuentos de oyentes mensuales usados por tau. On the conversational side,
 \textbf{SCS} measures alignment between the query and the recommended track with
 BERT embeddings~\cite{devlin2019bert,gao2021advances},
 \begin{equation}
@@ -375,7 +396,7 @@ explanation against human-annotated references.
 \subsection{Comparative Performance}
 \begin{table}
 \caption{Performance of EchoPulse AI against baselines on the shared interaction
-matrix. Best results in bold; values are means over 5-fold cross-validation.}
+matrix. Best results in bold.}
 \label{tab:results}
 \centering
 \renewcommand{\arraystretch}{1.2}
@@ -404,25 +425,31 @@ Source: own elaboration.}
 \label{fig:performance}
 \end{figure}
 
-Table~\ref{tab:results} and Figure~\ref{fig:performance} support both
-hypotheses. EchoPulse AI doubles the Hit@10 of the strongest sequential baseline
-(0.312 vs.\ 0.164) while lifting ILD by 45.3\% and EAD by 157.9\% relative to
-collaborative filtering. The diversity gain matters: by popularity tier,
-emerging-artist recommendations rise from 12.7\% (collaborative filtering) and
-20.1\% (TalkPlay) to 32.7\%, which is the effect this research was designed to
-produce~\cite{brynjolfsson2011long,porcaro2021diversity}. Paired $t$-tests
-confirm the ILD and EAD improvements are not random variation
-($p<0.001$). Unlike re-ranking methods that inject diversity at the cost of
-accuracy, our results show the two can be optimised jointly once the model is
-grounded in intrinsic multimodal content rather than historical popularity
-loops. The generative metrics point the same way: SCS 0.741 versus 0.623, IAR
-0.698 versus 0.587 and RC 0.412 versus 0.358 BLEU-4 against the TalkPlay
-baseline.
+Table~\ref{tab:results} and Figure~\ref{fig:performance} are consistent with
+both hypotheses. EchoPulse AI records twice the Hit@10 of the strongest
+sequential baseline (0.312 vs.\ 0.164) and raises ILD by 45.3\% and EAD by
+157.9\% relative to collaborative filtering. By popularity tier, the share of
+emerging-artist recommendations goes from 12.7\% (collaborative filtering) and
+20.1\% (TalkPlay) to 32.7\%, which is the distributional change the study was
+designed to measure~\cite{brynjolfsson2011long,porcaro2021diversity}; the ILD
+and EAD differences were tested with paired $t$-tests ($p<0.001$).
 
-The ablation study attributes those gains to specific components: removing the
+%% VERIFICAR (autores): unidad de contraste y n de los t-tests (usuarios,
+%% queries o listas recomendadas).
+The accuracy picture is not uniform across metrics: nDCG@10 nearly ties SASRec
+(0.179 vs.\ 0.178), so the gain concentrates in top-of-list retrieval and in the
+diversity indicators rather than in the complete ranking. Within this controlled
+setting diversity improved without an accuracy penalty, but whether the same
+holds on an uncurated catalogue remains open. The conversational metrics follow
+the same pattern: SCS 0.741 against 0.623 and IAR 0.698 against 0.587 for
+TalkPlay. RC applies only to systems that generate an explanation, so it is
+reported for these two models alone: 0.412 BLEU-4 against 0.358.
+
+The ablation study attributes the gains to specific components: removing the
 IntentTransformer costs 7.9\% of MRR, eliminating MST-MR costs 15.2\% of Hit@10,
-and cross-attention alone contributes 14.1\% of nDCG@10, validating the decision
-to let modalities attend to each other. On latency, core retrieval takes 125\,ms,
+and cross-attention alone contributes 14.1\% of nDCG@10, which suggests that the
+interaction between modalities, and not only the extra encoders, carries part of
+the improvement. On latency, core retrieval takes 125\,ms,
 re-ranking 90\,ms and metadata enrichment 15\,ms (215\,ms combined, mean of 100
 runs), whereas the two Qwen 2.5 stages add 2,800\,ms for keyword translation and
 3,200\,ms for the final response, giving an end-to-end pipeline of about 6.23\,s.
@@ -431,39 +458,38 @@ runs), whereas the two Qwen 2.5 stages add 2,800\,ms for keyword translation and
 \section{Discussion}
 \label{sec:discussion}
 
-Three findings stand out. Cross-attention beats early and late fusion, and every
-encoder contributes information the others cannot recover, consistent with the
-multimodal literature~\cite{baltruvsaitis2019multimodal}. The local lakehouse met
-the reproducibility and traceability goals without cloud services, which matters
-for research groups with limited budgets and unreliable connectivity. And the
-157.9\% EAD gain suggests that algorithmic curation can balance user satisfaction
-with ecosystem health~\cite{brynjolfsson2011long}: for musicians in Colombia,
-where entering mainstream recommendation is nearly impossible, this is an
-alternative pathway to an audience.
+Three points deserve comment. The ablation attributes a measurable share of the
+gain to cross-attention, and each encoder removes work the others cannot
+recover, which matches the multimodal literature~\cite{baltruvsaitis2019multimodal};
+a direct early- versus late-fusion comparison is still missing. The local
+lakehouse met the reproducibility and traceability targets without cloud
+services, which is relevant for groups with limited budgets and unreliable
+connectivity. The EAD result indicates that content-driven curation can
+redistribute exposure inside a catalogue~\cite{brynjolfsson2011long}; for
+musicians in secondary scenes such as Popayán, that is a practical difference
+rather than a statistical one.
 
-Relative to the baselines, the difference is structural rather than numerical.
-BERT4Rec and SASRec process interaction sequences only, so they inherit
-popularity bias; TalkPlay generates recommendations in language but without
-structured multimodal fusion or generative-component evaluation. EchoPulse AI
-replaces historical popularity signals with content affinity, which is precisely
-what an artist without play history needs.
+Relative to the baselines, the difference is architectural. BERT4Rec and SASRec
+process interaction sequences only, so they inherit the popularity structure of
+their training data; TalkPlay generates recommendations in language but does not
+fuse modalities or evaluate its generative output. EchoPulse AI ranks by content
+affinity, which is the only signal available for an artist without play history.
 
-Limitations. The 5,710-track Master Table reflects the rigour of the
-multi-dataset matching required to guarantee complete multimodal coverage, not a
-bottleneck of the architecture: the fusion mechanism operates on
-fixed-dimensional latent spaces, so inference scales linearly with catalogue
-size and is amenable to approximate nearest neighbour indexing (for example
-FAISS) for industrial deployment. Beyond scale, the system mainly recommends
-English-language content, since WASABI, MSD and TalkPlayData-2 are predominantly
-English, which limits its reach for Spanish-language music and for regional
-Colombian genres such as vallenato, cumbia and bambuco. The matching pipeline is
-specific to these four datasets, so adapting it to arbitrary catalogs needs more
-flexible ingestion and automated schema mapping. The $\sim$6\,s end-to-end
-latency, driven by the LLM stages, may hurt latency-sensitive use cases, although
-caching and distillation could mitigate it. Finally, the evaluation is offline by
-design: this stage establishes the mathematical and empirical validity of
-multimodal fusion and bias mitigation, which is the prerequisite for the
-resource-intensive online trials that come later.
+Limitations. The Master Table holds 5,710 tracks because the matching step
+enforced complete multimodal coverage; this bounds the present study, even
+though the fusion mechanism itself operates on fixed-dimensional latent spaces,
+so inference cost grows linearly with catalogue size and approximate nearest
+neighbour indexing (for example FAISS) is the expected route to an industrial
+one. The system also mainly recommends English-language content, since WASABI,
+MSD and TalkPlayData-2 are predominantly English, which limits its reach for
+Spanish-language music and for regional Colombian genres such as vallenato,
+cumbia and bambuco. The matching pipeline is specific to these four datasets, so
+adapting it to arbitrary catalogues needs more flexible ingestion and automated
+schema mapping. The $\sim$6\,s end-to-end latency, driven by the LLM stages,
+rules out latency-sensitive uses until caching or distillation is added.
+Finally, the evaluation is offline: it measures ranking and generation quality on
+synthetic interactions rather than on real users, so no claim about satisfaction
+or long-term listening is supported yet.
 
 %% ============================================================================
 \section{Conclusions}
@@ -475,19 +501,21 @@ lyrical, acoustic, metadata and conversational signals with cross-attention, so
 that content affinity rather than historical popularity drives the ranking. On a
 controlled 5,710-track Master Table it improved Intra-List Diversity by 45.3\%
 and Emerging Artist Discovery by 157.9\% over collaborative filtering, while
-keeping competitive accuracy (Hit@10\,=\,0.312) and reaching the best SCS, IAR
-and RC among the compared systems. We plan to release the Master Table and the
-TalkPlayData-2 processing scripts as a public benchmark for reproducible
-multimodal music recommendation research.
+keeping accuracy competitive (Hit@10\,=\,0.312) and recording the best SCS, IAR
+and RC among the compared systems. Those figures come from synthetic
+interactions and offline evaluation; the next measurement has to come from real
+listeners. The Master Table construction and the interaction-generation scripts
+will be released so that the pipeline can be reproduced.
 
-Future work follows four directions: scaling to industrial-size catalogues with
-ANN indexing while preserving multimodal integrity; controlled online A/B studies
-to measure perceived quality and diversity satisfaction; multilingual adaptation
-to Spanish lyrics and Latin American genres with encoders such as mBERT or XLM-R;
-and a reinforcement-learning-from-human-feedback loop that updates
-cross-attention weights from real-time corrections, together with per-modality
-encoders and distillation for edge deployment. This is only a first step, but it
-is a necessary one.
+%% VERIFICAR (autores): confirmar donde se publicaran esos scripts antes de
+%% afirmar la disponibilidad.
+Future work runs in four directions: scaling to industrial-size catalogues with
+ANN indexing while preserving multimodal integrity; controlled online studies
+that measure perceived quality and diversity satisfaction; multilingual
+adaptation to Spanish lyrics and Latin American genres with encoders such as
+mBERT or XLM-R; and a reinforcement-learning loop from human feedback that
+updates cross-attention weights from user corrections, together with
+per-modality encoders and distillation for edge deployment.
 
 %% ============================================================================
 \begin{acknowledgments}
